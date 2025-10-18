@@ -1,5 +1,6 @@
 package com.mewtr.microcam
 
+import android.R.attr.theme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -110,31 +111,38 @@ fun Conversation(messages: List<Message>, modifier: Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainActivityTopBar(darkTheme: Boolean, onClick: (Boolean) -> Unit){
+fun MainActivityTopBar(darkTheme: Boolean, onClick: () -> Unit){
     TopAppBar(title = {Text("")},
         actions = {MainActivityTopBarActions(darkTheme, onClick)})
 }
 
 @Composable
-fun RowScope.MainActivityTopBarActions(darkTheme: Boolean, onClick: (Boolean) -> Unit){
+fun RowScope.MainActivityTopBarActions(darkTheme: Boolean, onClick: () -> Unit){
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.visibility3));
     val progress: Float by animateFloatAsState(if (darkTheme) 1f else 0.0f)
         LottieAnimation(
             composition = composition,
             progress = {progress},
-            modifier = Modifier.clickable(onClick = { onClick(darkTheme) },
+            modifier = Modifier.clickable(onClick = onClick,
             interactionSource = remember { MutableInteractionSource() },
             indication = null) // Disable ripple effect onbutton click. Needs interactionSource to be defined
             .padding(4.dp)
         )
 }
+
 @Composable
 fun Main(){
     var darkTheme by remember {mutableStateOf(true)}
+    // Local function to capture variable in outer scope
+    fun onEyeClick() {
+        darkTheme = !darkTheme;
+    }
+
     MicrocamTheme (darkTheme){
         Surface {
             Scaffold(modifier = Modifier.fillMaxSize(),
-                topBar = { MainActivityTopBar(darkTheme, onClick = { darkTheme = !darkTheme}) }) {
+                // topBar = { MainActivityTopBar(darkTheme, onClick = {(::onEyeClick)()}) }) { // <- this also works
+                topBar = { MainActivityTopBar(darkTheme, onClick = ::onEyeClick) }) {
                 innerPadding ->
                 Conversation(SampleData.conversationSample, Modifier.padding(innerPadding))
             }
