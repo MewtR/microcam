@@ -7,13 +7,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateContentSize
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
-import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -27,8 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -45,10 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.mewtr.microcam.ui.theme.MicrocamTheme
 import androidx.compose.runtime.getValue
 import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieClipSpec
 import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 
 class MainActivity : ComponentActivity() {
@@ -56,13 +48,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge() // Displaying content behind the system UI is called going edge-to-edge
         setContent {
-            MicrocamTheme (darkTheme = true){
-                Surface {
-                    Scaffold(modifier = Modifier.fillMaxSize(), topBar = { MainActivityTopBar() }) { innerPadding ->
-                        Conversation(SampleData.conversationSample, Modifier.padding(innerPadding))
-                    }
-                }
-            }
+            Main()
         }
     }
 }
@@ -124,21 +110,34 @@ fun Conversation(messages: List<Message>, modifier: Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainActivityTopBar(){
+fun MainActivityTopBar(darkTheme: Boolean, onClick: (Boolean) -> Unit){
     TopAppBar(title = {Text("")},
-        actions = {MainActivityTopBarActions()})
+        actions = {MainActivityTopBarActions(darkTheme, onClick)})
 }
 
 @Composable
-fun RowScope.MainActivityTopBarActions(){
+fun RowScope.MainActivityTopBarActions(darkTheme: Boolean, onClick: (Boolean) -> Unit){
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.visibility3));
-    var darkTheme by remember {mutableStateOf(true)}
     val progress: Float by animateFloatAsState(if (darkTheme) 1f else 0.0f)
-    OutlinedButton(onClick = { darkTheme = !darkTheme } )
-    {
         LottieAnimation(
             composition = composition,
             progress = {progress},
+            modifier = Modifier.clickable(onClick = { onClick(darkTheme) },
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null) // Disable ripple effect onbutton click. Needs interactionSource to be defined
+            .padding(4.dp)
         )
+}
+@Composable
+fun Main(){
+    var darkTheme by remember {mutableStateOf(true)}
+    MicrocamTheme (darkTheme){
+        Surface {
+            Scaffold(modifier = Modifier.fillMaxSize(),
+                topBar = { MainActivityTopBar(darkTheme, onClick = { darkTheme = !darkTheme}) }) {
+                innerPadding ->
+                Conversation(SampleData.conversationSample, Modifier.padding(innerPadding))
+            }
+        }
     }
 }
